@@ -55,23 +55,34 @@ try:
 	cache_file.close()
 	CACHE_DICTION = json.loads(cache_contents)
 except:
+	#CACHE_DICTION = {'timeline_info':{}, 'users_info':{}}
 	CACHE_DICTION = {}
-
 
 # Define your function get_user_tweets here:
 def get_user_tweets(user):
-	user = user[1:]
-	if user in CACHE_DICTION:
+	user_name = user[1:]
+	if user_name in CACHE_DICTION:
 		print('using cache')
 		results = CACHE_DICTION[user]
 	else:
 		print('fetching data')
-		retults = api.user_timeline(screen_name = user, count = 20)
-		CACHE_DICTION[user] = results
+		retults = api.user_timeline(screen_name = user_name, count = 20)
+		CACHE_DICTION[user_name] = results
 		f = open(CACHE_FNAME,'w')
 		f.write = write(json.dumps(CACHE_DICTION))
 		f.close()
 	return results    
+	
+	#if user in CACHE_DICTION['timeline_info']:
+		#rint('using cache')
+	#else:
+		#print('fetching data')
+		#results = api.user_timeline(user, count = 20)
+		#CACHE_DICTION['timeline_info']['user'] = results
+		#f = open(CACHE_FNAME,'w')
+		#f.write(json.dumps(CACHE_DICTION))
+		#f.close()
+	#return CACHE_DICTION['timeline_info'][user]
 
 # Write an invocation to the function for the "umich" user timeline and 
 # save the result in a variable called umich_tweets:
