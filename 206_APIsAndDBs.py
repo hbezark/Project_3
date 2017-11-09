@@ -63,18 +63,18 @@ def get_user_tweets(user):
 	user_name = user[1:]
 	if user_name in CACHE_DICTION:
 		print('using cache')
-		results = CACHE_DICTION[user]
+		results = CACHE_DICTION[user_name]
 	else:
 		print('fetching data')
-		retults = api.user_timeline(screen_name = user_name, count = 20)
+		results = api.user_timeline(screen_name = user_name, count = 20)
 		CACHE_DICTION[user_name] = results
 		f = open(CACHE_FNAME,'w')
-		f.write = write(json.dumps(CACHE_DICTION))
+		f.write(json.dumps(CACHE_DICTION))
 		f.close()
 	return results    
 	
 	#if user in CACHE_DICTION['timeline_info']:
-		#rint('using cache')
+		#print('using cache')
 	#else:
 		#print('fetching data')
 		#results = api.user_timeline(user, count = 20)
@@ -103,7 +103,7 @@ cur = conn.cursor()
 cur.execute('DROP TABLE IF EXISTS Users')
 cur.execute('CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs INTEGER, description TEXT)')
 for tw in umich_tweets:
-	for users in tweets["entities"]["user_mentions"]:
+	for users in tw["entities"]["user_mentions"]:
 		tup = users["id_str"], users["screen_name"], users["favourites_count"], users["description"]
 		cur.execute('INSERT INTO Users (user_id, screen_name, num_favs, descripton) VALUES (?, ?, ?, ?)', tup)
 
