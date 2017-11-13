@@ -55,34 +55,22 @@ try:
 	cache_file.close()
 	CACHE_DICTION = json.loads(cache_contents)
 except:
-	#CACHE_DICTION = {'timeline_info':{}, 'users_info':{}}
 	CACHE_DICTION = {}
 
 # Define your function get_user_tweets here:
 def get_user_tweets(user):
-	user_name = user[1:]
-	if user_name in CACHE_DICTION:
+	if user in CACHE_DICTION:
 		print('using cache')
-		results = CACHE_DICTION[user_name]
+		results = CACHE_DICTION[user]
 	else:
 		print('fetching data')
-		results = api.user_timeline(screen_name = user_name, count = 20)
-		CACHE_DICTION[user_name] = results
+		results = api.user_timeline(user)
+		CACHE_DICTION[user] = results
 		f = open(CACHE_FNAME,'w')
 		f.write(json.dumps(CACHE_DICTION))
 		f.close()
-	return results    
+	return results  
 	
-	#if user in CACHE_DICTION['timeline_info']:
-		#print('using cache')
-	#else:
-		#print('fetching data')
-		#results = api.user_timeline(user, count = 20)
-		#CACHE_DICTION['timeline_info']['user'] = results
-		#f = open(CACHE_FNAME,'w')
-		#f.write(json.dumps(CACHE_DICTION))
-		#f.close()
-	#return CACHE_DICTION['timeline_info'][user]
 
 # Write an invocation to the function for the "umich" user timeline and 
 # save the result in a variable called umich_tweets:
@@ -101,26 +89,37 @@ conn = sqlite3.connect('206_APIsAndDBs.sqlite')
 cur = conn.cursor()
 
 cur.execute('DROP TABLE IF EXISTS Users')
-cur.execute('CREATE TABLE Users (user_id TEXT PRIMARY KEY, screen_name TEXT, num_favs INTEGER, description TEXT)')
-for tw in umich_tweets:
-	for users in tw["entities"]["user_mentions"]:
-		tup = users["id_str"], users["screen_name"], users["favourites_count"], users["description"]
-		cur.execute('INSERT INTO Users (user_id, screen_name, num_favs, descripton) VALUES (?, ?, ?, ?)', tup)
+cur.execute('CREATE TABLE Users (user_id INTEGER, screen_name VARCHAR, num_favs INTEGER, description TEXT, PRIMARY KEY(user_id))')
 
-
-cur.execute('CREATE TABLE Tweets (tweet_id TEXT PRIMARY KEY, text TEXT, user_posted TEXT, time_posted DATETIME, retweets INTEGER)')
-for tw in umich_tweets:
-	tup = tw['id_str'], tw['text'], tw['user']['id_str'], tw['created_at'], tw['retweet_count']
-	cur.execute('INSERT INTO Tweets (tweet_id, text, user_posted, time_posted, retweets) VALUES(?, ?, ?, ?, ?)', tup)
-
-conn.commit()
+users_lst = []
+for tweet in umich_tweets:
+	if tweet['user']['id'] not in users_lst:
+		cur.execute('INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?, ?, ?, ?)', 
+			(tweet['user']['id'], tweet ['user']['screen_name'], tweet['user']['favourites_count'], tweet['user']['description']))
+		users_lst.append(tweet['user']['id'])
+	for user_mens in tweet['entities']['user_mentions']:
+		if user_mens['id'] not in users_lst:
+			user_mentioned = api.get_user(user_mens['id'])
+			cur.execute('INSERT INTO Users (user_id, screen_name, num_favs, description) VALUES (?,?, ?, ?)', 
+			(user_mens['id'], user_mens['screen_name'], user_mentioned['favourites_count'], user_mentioned['description']))
+			users_lst.append(user_mens['id'])
 
 ## You should load into the Tweets table: 
 # Info about all the tweets (at least 20) that you gather from the 
 # umich timeline.
 # NOTE: Be careful that you have the correct user ID reference in 
 # the user_id column! See below hints.
+cur.execute('DROP TABLE IF EXISTS Tweets')
+cur.execute('CREATE TABLE Tweets (tweet_id INTEGER, text TEXT, user_posted INTEGER, time_posted DATETIME, retweets INTEGER, PRIMARY KEY (tweet_id), FOREIGN KEY (user_posted) REFERENCES Users (user_id))')
 
+tweets_lst = []
+for tweet in umich_tweets:
+	if tweet['id'] not in tweets_lst:
+		cur.execute('INSERT INTO Tweets (tweet_id, text, user_posted, time_posted, retweets) VALUES (?, ?, ?, ?, ?)', 
+		(tweet['id'], tweet['text'], tweet['user']['id'], tweet['created_at'], tweet['retweet_count'],))
+		tweets_lst.append(tweet['id'])
+
+conn.commit()
 
 ## HINT: There's a Tweepy method to get user info, so when you have a 
 ## user id or screenname you can find alllll the info you want about 
