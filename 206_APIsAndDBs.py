@@ -139,39 +139,47 @@ conn.commit()
 # Make a query to select all of the records in the Users database. 
 # Save the list of tuples in a variable called users_info.
 
-users_info = True
+users_info = list(cur.execute('SELECT * FROM Users'))
 
 # Make a query to select all of the user screen names from the database. 
 # Save a resulting list of strings (NOT tuples, the strings inside them!) 
 # in the variable screen_names. HINT: a list comprehension will make 
 # this easier to complete! 
-screen_names = True
+screen_names = []
+for tup in list(cur.execute('SELECT screen_name FROM Users')):
+	for string in tup:
+		screen_names.append(string)
 
 
 # Make a query to select all of the tweets (full rows of tweet information)
 # that have been retweeted more than 10 times. Save the result 
 # (a list of tuples, or an empty list) in a variable called retweets.
-retweets = True
+retweets = list(cur.execute('SELECT * FROM Tweets WHERE retweets > 10'))
 
 
 # Make a query to select all the descriptions (descriptions only) of 
 # the users who have favorited more than 500 tweets. Access all those 
 # strings, and save them in a variable called favorites, 
 # which should ultimately be a list of strings.
-favorites = True
-
+favorites = []
+for tup in list(cur.execute('SELECT description FROM Users WHERE num_favs > 500')):
+	for string in tup:
+		favorites.append(string)
 
 # Make a query using an INNER JOIN to get a list of tuples with 2 
 # elements in each tuple: the user screenname and the text of the 
 # tweet. Save the resulting list of tuples in a variable called joined_data2.
 joined_data = True
+#list(cur.execute('SELECT screen_name, text FROM Tweets join Users on Users.user_id = Tweets.user_posted'))
+
 
 # Make a query using an INNER JOIN to get a list of tuples with 2 
 # elements in each tuple: the user screenname and the text of the 
 # tweet in descending order based on retweets. Save the resulting 
 # list of tuples in a variable called joined_data2.
-
 joined_data2 = True
+#list(cur.execute('SELECT screen_name, text FROM Tweets join Users on Users.user_id = Tweets.user_posted ORDER BY Tweets.retweets DESC'))
+
 
 
 ### IMPORTANT: MAKE SURE TO CLOSE YOUR DATABASE CONNECTION AT THE END 
